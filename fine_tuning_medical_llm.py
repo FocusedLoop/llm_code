@@ -3,6 +3,8 @@ from trl import SFTTrainer
 from peft import LoraConfig
 from datasets import load_dataset
 from transformers import (AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TrainingArguments, pipeline)
+#from transformers import top_k_top_p_filtering
+
 
 # Loading the model
 llama_model = AutoModelForCausalLM.from_pretrained(pretrained_model_name_or_path = "aboonaji/llama2finetune-v2",

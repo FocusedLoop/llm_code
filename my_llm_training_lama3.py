@@ -1,64 +1,81 @@
-import transformers
+from transformers import AutoModelForCausalLM, TrainingArguments, AutoTokenizer, Trainer, BitsAndBytesConfig, pipeline
+from peft import LoraConfig, get_peft_model
+from datasets import load_dataset
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
-model_id = "unsloth/llama-3-8b-bnb-4bit"
+model_id = r"C:\Users\Joshua\Desktop\python_ai\llm_code\llama31\Llama-3.1-8B-Instruct"
+dataset = ""
 
-# Load the pretrained model using to_empty to handle meta tensors
-llama_model = AutoModelForCausalLM.from_pretrained(
-    model_id,
-    torch_dtype=torch.bfloat16,  # Use bfloat16 for efficiency
-    device_map="auto",  # Automatically map model layers to available devices
-    quantization_config=BitsAndBytesConfig(  # Ensure the model is loaded in 4-bit precision
-        load_in_4bit=True,
-        bnb_4bit_compute_dtype=torch.float16,
-        bnb_4bit_quant_type="nf4"
-    ),
-    ignore_mismatched_sizes=True,
+# Loading model
+quantization_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_compute_dtype=torch.float16,
+    bnb_4bit_quant_type="nf4"
+) # INSPECT MORE
+
+llm_model = AutoModelForCausalLM.from_pretrained(
+    pretrained_model_name_or_path=model_id,
+    quantization_config=quantization_config
 )
 
-# Use to_empty() before moving the model to the GPU
-llama_model.to_empty()
+# Tokenizer
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+tokenizer.pad_token = tokenizer.eos_token
+tokenizer.padding_side = "right"
 
-# Now move the model to the GPU
-llama_model = llama_model.to("cuda")
+# Training arguments
+strat = "steps"
+step_amount = 100
+training_args = TrainingArguments(output_dir="./test_trainer")
+training_args.set_dataloader(train_batch_size=8, eval_batch_size=32)
+training_args.set_evaluate(strategy=strat, steps=step_amount)
+training_args.set_logging(strategy=strat, steps=step_amount)
 
-# Load the tokenizer
-llama_tokenizer = AutoTokenizer.from_pretrained(model_id)
+# Fine tunning
+# Optimize training
+peft_config = LoraConfig(
+    task_type = "CAUSAL_LM", 
+    r = 64, lora_alpha = 16, 
+    lora_dropout = 0.1
+)
+llm_model = get_peft_model(llm_model, peft_config)
 
-# Create the text generation pipeline
-text_generation_pipeline = transformers.pipeline(
+# Start Training with dataset
+finetune_dataset = load_dataset(path=dataset, split="train") # GO OVER
+
+trainer = Trainer(
+    model=llm_model,
+    args=training_args,
+    train_dataset=finetune_dataset,
+    tokenizer=tokenizer
+)
+
+# Pipeline for taking in inputs
+pipeline = pipeline(
     "text-generation",
-    model=llama_model,
-    tokenizer=llama_tokenizer,
-    device=0,  # Use GPU (device 0)
+    model=model_id,
+    model_kwargs={"torch_dtype": torch.bfloat16},
+    device="cuda",
 )
 
-messages = [
-    {"role": "system", "content": "You are a pirate chatbot who always responds in pirate speak!"},
-    {"role": "user", "content": "Who are you?"},
-]
 
-# Prepare the prompt using the tokenizer's template
-prompt = llama_tokenizer.apply_chat_template(
-    messages, 
-    tokenize=False, 
-    add_generation_prompt=True
-)
+# Prompting
+while True:
+    user_prompt = input("What's your question?\n")
+    if user_prompt == "exit":
+        break
+    messages = [
+    {"role": "system", "content": (
+            "You are a highly knowledgeable mathematician and engineering chatbot. "
+            "Your purpose is to assist users by providing detailed, scientifically accurate explanations of mathematical and engineering concepts. "
+            "Use formal scientific language and precise terminology, ensuring your responses are comprehensive and thorough. "
+            "Reference relevant theories, equations, and examples as needed, but keep your explanations strictly text-based. "
+            "Organize your answers clearly, and aim to enhance understanding by elucidating complex concepts without oversimplifying them."
+        )},
+    {"role": "user", "content": user_prompt}]
 
-terminators = [
-    llama_tokenizer.eos_token_id,
-    llama_tokenizer.convert_tokens_to_ids("<|eot_id|>")
-]
+    outputs = pipeline(messages,max_new_tokens=256)
+    responce = outputs[0]["generated_text"]
+    print(responce)
 
-outputs = text_generation_pipeline(
-    prompt,
-    max_new_tokens=256,
-    eos_token_id=terminators,
-    do_sample=True,
-    temperature=0.6,
-    top_p=0.9,
-)
-print(outputs[0]["generated_text"][len(prompt):])
-
-# https://colab.research.google.com/drive/1Aau3lgPzeZKQ-98h69CCu1UJcvIBLmy2?usp=sharing#scrollTo=2eSvM9zX_2d3
+print("Exiting...")
