@@ -1,26 +1,22 @@
-\section*{Local LLM Notebooks and Utilities}
+# Local LLM Notebooks and Utilities
 
-This repository contains a collection of local LLM notebooks and helper scripts. Most models make use of the \texttt{transformers} library provided by Hugging Face and are designed to run locally.
+This repository contains a collection of local LLM notebooks and helper scripts. Most models use the [`transformers`](https://github.com/huggingface/transformers) library by Hugging Face and are designed to run locally.
 
-\subsection*{Structure and Usage}
+## Structure and Usage
 
-\begin{itemize}
-    \item \textbf{Training}: Notebooks (\texttt{.ipynb}) are typically converted to Python scripts (\texttt{.py}) and run in the background using \texttt{tmux}. Logs are saved for later review.
-    \item \textbf{Control}: Scripts are included to stop training by terminating the corresponding \texttt{tmux} session.
-\end{itemize}
+- **Training**: Notebooks (`.ipynb`) are typically converted to Python scripts (`.py`) and run in the background using `tmux`. Logs are saved for later review.
+- **Control**: Scripts are included to stop training by terminating the corresponding `tmux` session.
 
-\subsection*{Search-Based Models}
+## Search-Based Models
 
-Some models require a running instance of a \texttt{searXNG} container for retrieval-augmented generation (RAG). Ensure this container is correctly set up and running before using search-integrated models.
+Some models require a running instance of a [SearXNG](https://github.com/searxng/searxng) container for retrieval-augmented generation (RAG). Make sure this container is set up and running before using search-integrated models.
 
-\subsection*{Environment Note}
+## Environment Note
 
-These scripts assume you are using a Conda environment named \texttt{llm-env}.  
-You will need to manually set up your own environment with the required dependencies. No automatic environment setup is currently provided.
+These scripts assume you are using a Conda environment named `llm-env`.  
+You will need to manually set up your own environment with the necessary dependencies. Automatic setup is not currently provided.
 
-\subsection*{Coming Soon}
+## Coming Soon
 
-\begin{itemize}
-    \item Setup instructions
-    \item Docker container for full environment and dependency setup
-\end{itemize}
+- Setup instructions
+- Docker container for full environment and dependency setup
