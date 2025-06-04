@@ -9,7 +9,7 @@ This repository contains a collection of local LLM notebooks and helper scripts.
 
 ## Search-Based Models
 
-Some models require a running instance of a [SearXNG](https://github.com/searxng/searxng) container for retrieval-augmented generation (RAG). Make sure this container is set up and running before using search-integrated models.
+Some models require a running instance of a [SearXNG](https://github.com/searxng/searxng) container for web based seatching. Make sure this container is set up and running before using search-integrated models.
 
 ## Environment Note
 
